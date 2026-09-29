@@ -131,6 +131,64 @@ RaidSec:Button({
     end
 })   
 
+RaidSec:Button({
+    Title = "TP to My Portal",
+    Desc = "Teleport to your claimed portal",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local camera = workspace.CurrentCamera
+
+        local function getHrp()
+            local char = player.Character
+            if not char then return nil end
+            return char:FindFirstChild("HumanoidRootPart")
+        end
+
+        local function findText(obj)
+            if not obj then return nil end
+            for _, child in pairs(obj:GetChildren()) do
+                if child:IsA("TextLabel") then
+                    return child.Text
+                end
+                local found = findText(child)
+                if found then return found end
+            end
+            return nil
+        end
+
+        while not getHrp() do wait(0.5) end
+
+        local raids = workspace._THINGS.Minigames.RaidEvent.Portals.Raids
+        if not raids then return end
+
+        local myName = player.Name
+        local myNum = nil
+
+        for i = 1, 10 do
+            local raid = raids:FindFirstChild(tostring(i))
+            if raid then
+                local bb = raid:FindFirstChild("Billboard")
+                if bb then
+                    local text = findText(bb)
+                    if text and text:find(myName) then
+                        myNum = i
+                        break
+                    end
+                end
+            end
+        end
+
+        if myNum then
+            local pad = raids[tostring(myNum)].Pad.Part
+            local hrp = getHrp()
+            if hrp and pad then
+                hrp.CFrame = pad.CFrame + Vector3.new(0, 5, 0)
+                camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), pad.Position)
+            end
+        end
+    end
+})   
+
 local respawnWait = 0.1
 
 local gateWait = 1.2
