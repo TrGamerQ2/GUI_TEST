@@ -42,85 +42,190 @@ local RaidSec = RaidTab:Section({ Title = "Auto Raid" })
 
 RaidSec:Button({
     Title = "TP to Free Portal",
-    Desc = "Teleport to unclaimed portal",
+    Desc = "Portal + Free Portal",
     Callback = function()
+        local player = game.Players.LocalPlayer
+        local camera = workspace.CurrentCamera
+
+        local function getHrp()
+            local char = player.Character
+            if not char then return nil end
+            return char:FindFirstChild("HumanoidRootPart")
+        end
+
+        local function findPrompt(obj)
+            if not obj then return nil end
+            for _, child in pairs(obj:GetChildren()) do
+                if child:IsA("ProximityPrompt") then
+                    return child
+                end
+                local found = findPrompt(child)
+                if found then return found end
+            end
+            return nil
+        end
+
+        local function findText(obj)
+            if not obj then return nil end
+            for _, child in pairs(obj:GetChildren()) do
+                if child:IsA("TextLabel") then
+                    return child.Text
+                end
+                local found = findText(child)
+                if found then return found end
+            end
+            return nil
+        end
+
+        while not getHrp() do wait(0.5) end
+
+        -- 1. ТП к RaidPortal + нажать E
+        local hrp = getHrp()
+        local portal = workspace._MAP.Interact.RaidPortal.Portal
+        if portal then
+            hrp.CFrame = portal.CFrame + Vector3.new(-5, 3, -5)
+            camera.CFrame = CFrame.lookAt(
+                hrp.Position + Vector3.new(-55, 3, -33),
+                portal.Position
+            )
+            wait(0.1)
+
+            local prompt = findPrompt(workspace._MAP.Interact.RaidPortal)
+            if prompt then
+                prompt:InputHoldBegin()
+                wait(1)
+                prompt:InputHoldEnd()
+            end
+            wait(2)
+        end
+
+        -- 2. ТП к свободному порталу
         local raids = workspace._THINGS.Minigames.RaidEvent.Portals.Raids
         if not raids then return end
+
         local freeNum = nil
         for i = 1, 10 do
             local raid = raids:FindFirstChild(tostring(i))
             if raid then
                 local bb = raid:FindFirstChild("Billboard")
-                if bb and findText(bb) and findText(bb):find("Unclaimed") then
-                    freeNum = i
-                    break
+                if bb then
+                    local text = findText(bb)
+                    if text and text:find("Unclaimed") then
+                        freeNum = i
+                        break
+                    end
                 end
             end
         end
+
         if freeNum then
             local pad = raids[tostring(freeNum)].Pad.Part
-            local hrp = getHrp()
+            hrp = getHrp()
             if hrp and pad then
-                hrp.CFrame = pad.CFrame
+                hrp.CFrame = pad.CFrame + Vector3.new(0, 5, 0)
                 camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), pad.Position)
+                wait(10)
             end
+        end
+    end
+})   
+
+local respawnWait = 0.1
+
+RaidSec:Toggle({
+    Title = "Auto Farm Loop",
+    Desc = "Clicks + Gates + Shadow (loop)",
+    Value = false,
+    Callback = function(v)
+        if v then
+            task.spawn(function()
+                local stop = false
+                game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+                    if gp then return end
+                    if input.KeyCode == Enum.KeyCode.F3 then stop = true end
+                end)
+
+                while not stop do
+                    local ok, err = pcall(function()
+                        local VIM = game:GetService("VirtualInputManager")
+                        VIM:SendMouseButtonEvent(950, 667, 0, true, game, 0)
+                        wait(0.3)
+                        VIM:SendMouseButtonEvent(950, 667, 0, false, game, 0)
+                        wait(0.4)
+                        VIM:SendMouseButtonEvent(639, 679, 0, true, game, 0)
+                        wait(0.3)
+                        VIM:SendMouseButtonEvent(639, 679, 0, false, game, 0)
+                        wait(3)
+
+                        local player = game.Players.LocalPlayer
+                        local camera = workspace.CurrentCamera
+
+                        local function getHrp()
+                            local char = player.Character
+                            if not char then return nil end
+                            return char:FindFirstChild("HumanoidRootPart")
+                        end
+
+                        while not getHrp() do wait(respawnWait) end
+
+                        local rooms = workspace._THINGS.Minigames.RaidLobby.Rooms
+                        if not rooms then
+                            wait(5)
+                            return
+                        end
+
+                        for i = 1, 6 do
+                            local room = rooms[tostring(i)]
+                            if room then
+                                local gate = room.Gate[tostring(1)]
+                                if gate then
+                                    local hrp = getHrp()
+                                    if hrp then
+                                        hrp.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
+                                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), gate.Position)
+                                    end
+                                end
+                            end
+                            wait(1.2)
+                        end
+
+                        local interact = workspace._THINGS.Minigames.RaidLobby.Interact
+                        if interact then
+                            local door = interact:GetChildren()[4]
+                            if door then
+                                local shadow = door:FindFirstChild("Shadow")
+                                if shadow then
+                                    local hrp = getHrp()
+                                    if hrp then
+                                        hrp.CFrame = shadow.CFrame
+                                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), shadow.Position)
+                                    end
+                                end
+                            end
+                        end
+                    end)
+
+                    if not ok then
+                        wait(5)
+                    end
+                    wait(3)
+                end
+            end)
         end
     end
 })
 
-RaidSec:Button({
-    Title = "Max + Start Raid",
-    Desc = "Max difficulty + Start",
-    Callback = function()
-        local gui = player.PlayerGui:FindFirstChild("RaidCreate")
-        if not gui or not gui.Enabled then return end
-        local right = gui.Frame.Container.Right
-        local start = gui.Frame.Container.Start
-        for i = 1, 10 do
-            if not start.Active then break end
-            right:Activate()
-            wait(0.3)
-        end
-        if start.Active then start:Activate() end
+RaidSec:Slider({
+    Title = "Respawn Wait",
+    Desc = "Wait for respawn (sec)",
+    Min = 0.1,
+    Max = 10,
+    Default = 0.1,
+    Rounding = 1,
+    Callback = function(v)
+        respawnWait = v
     end
-})
-
-RaidSec:Button({
-    Title = "Gates 1-6 + Shadow",
-    Desc = "TP through all gates",
-    Callback = function()
-        local rooms = workspace._THINGS.Minigames.RaidLobby.Rooms
-        if not rooms then return end
-        for i = 1, 6 do
-            local room = rooms[tostring(i)]
-            if room then
-                local gate = room.Gate[tostring(1)]
-                if gate then
-                    local hrp = getHrp()
-                    if hrp then
-                        hrp.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
-                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), gate.Position)
-                    end
-                end
-            end
-            wait(1.2)
-        end
-        local interact = workspace._THINGS.Minigames.RaidLobby.Interact
-        if interact then
-            local door = interact:GetChildren()[4]
-            if door then
-                local shadow = door:FindFirstChild("Shadow")
-                if shadow then
-                    local hrp = getHrp()
-                    if hrp then
-                        hrp.CFrame = shadow.CFrame
-                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), shadow.Position)
-                    end
-                end
-            end
-        end
-    end
-})
+})   
 
 RaidSec:Button({
     Title = "Clicks",
