@@ -146,70 +146,48 @@ Sec6:NewButton("TP Spawn", "Teleport to spawn", function()
 end)
 
 local Tab7 = Window:NewTab("Me")
-local Sec7 = Tab7:NewSection("Stats", "Character Stats (0-200)")
+local Sec7 = Tab7:NewSection("Stats", "Character Stats")
 
-Sec7:NewSlider("WalkSpeed", "WalkSpeed", 0, 200, 16, function(v)
+local function applyStat(prop, value)
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = v end
+        if hum then hum[prop] = value end
     end
+end
+
+Sec7:NewTextbox("WalkSpeed", "WalkSpeed (default: 16)", "16", function(v)
+    applyStat("WalkSpeed", tonumber(v) or 16)
 end)
 
-Sec7:NewSlider("JumpPower", "JumpPower", 0, 200, 50, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.JumpPower = v end
-    end
+Sec7:NewTextbox("JumpPower", "JumpPower (default: 50)", "50", function(v)
+    applyStat("JumpPower", tonumber(v) or 50)
 end)
 
-Sec7:NewSlider("JumpHeight", "JumpHeight", 0, 200, 7, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.JumpHeight = v end
-    end
+Sec7:NewTextbox("JumpHeight", "JumpHeight (default: 7)", "7", function(v)
+    applyStat("JumpHeight", tonumber(v) or 7)
 end)
 
-Sec7:NewSlider("SwimSpeed", "SwimSpeed", 0, 200, 14, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.SwimSpeed = v end
-    end
+Sec7:NewTextbox("SwimSpeed", "SwimSpeed (default: 14)", "14", function(v)
+    applyStat("SwimSpeed", tonumber(v) or 14)
 end)
 
-Sec7:NewSlider("WalkAnimScale", "Walk Animation Scale", 0, 200, 1, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkAnimationScale = v end
-    end
+Sec7:NewTextbox("WalkAnim", "Walk Animation Scale (default: 1)", "1", function(v)
+    applyStat("WalkAnimationScale", tonumber(v) or 1)
 end)
 
-Sec7:NewSlider("RunAnimScale", "Run Animation Scale", 0, 200, 1, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.RunAnimationScale = v end
-    end
+Sec7:NewTextbox("RunAnim", "Run Animation Scale (default: 1)", "1", function(v)
+    applyStat("RunAnimationScale", tonumber(v) or 1)
 end)
 
 Sec7:NewButton("Reset All", "Reset all to default", function()
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-            hum.JumpHeight = 7
-            hum.SwimSpeed = 14
-            hum.WalkAnimationScale = 1
-            hum.RunAnimationScale = 1
-        end
-    end
-end)      
+    applyStat("WalkSpeed", 16)
+    applyStat("JumpPower", 50)
+    applyStat("JumpHeight", 7)
+    applyStat("SwimSpeed", 14)
+    applyStat("WalkAnimationScale", 1)
+    applyStat("RunAnimationScale", 1)
+end)        
 
 local Tab8 = Window:NewTab("ESP")
 local Sec8 = Tab8:NewSection("ESP", "See through walls")
