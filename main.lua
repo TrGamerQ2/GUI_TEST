@@ -146,9 +146,9 @@ Sec6:NewButton("TP Spawn", "Teleport to spawn", function()
 end)
 
 local Tab7 = Window:NewTab("Me")
-local Sec7 = Tab7:NewSection("Movement", "Speed & Jump")
+local Sec7 = Tab7:NewSection("Stats", "Character Stats (0-200)")
 
-Sec7:NewSlider("WalkSpeed", "WalkSpeed", 1, 500, 16, function(v)
+Sec7:NewSlider("WalkSpeed", "WalkSpeed", 0, 200, 16, function(v)
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -156,7 +156,7 @@ Sec7:NewSlider("WalkSpeed", "WalkSpeed", 1, 500, 16, function(v)
     end
 end)
 
-Sec7:NewSlider("JumpPower", "JumpPower", 50, 500, 50, function(v)
+Sec7:NewSlider("JumpPower", "JumpPower", 0, 200, 50, function(v)
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -164,7 +164,7 @@ Sec7:NewSlider("JumpPower", "JumpPower", 50, 500, 50, function(v)
     end
 end)
 
-Sec7:NewSlider("JumpHeight", "JumpHeight", 1, 50, 7.2, function(v)
+Sec7:NewSlider("JumpHeight", "JumpHeight", 0, 200, 7, function(v)
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -172,17 +172,44 @@ Sec7:NewSlider("JumpHeight", "JumpHeight", 1, 50, 7.2, function(v)
     end
 end)
 
-Sec7:NewButton("Reset", "Reset all to default", function()
+Sec7:NewSlider("SwimSpeed", "SwimSpeed", 0, 200, 14, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.SwimSpeed = v end
+    end
+end)
+
+Sec7:NewSlider("WalkAnimScale", "Walk Animation Scale", 0, 200, 1, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkAnimationScale = v end
+    end
+end)
+
+Sec7:NewSlider("RunAnimScale", "Run Animation Scale", 0, 200, 1, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.RunAnimationScale = v end
+    end
+end)
+
+Sec7:NewButton("Reset All", "Reset all to default", function()
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
             hum.WalkSpeed = 16
             hum.JumpPower = 50
-            hum.JumpHeight = 7.2
+            hum.JumpHeight = 7
+            hum.SwimSpeed = 14
+            hum.WalkAnimationScale = 1
+            hum.RunAnimationScale = 1
         end
     end
-end)   
+end)      
 
 local Tab8 = Window:NewTab("ESP")
 local Sec8 = Tab8:NewSection("ESP", "See through walls")
