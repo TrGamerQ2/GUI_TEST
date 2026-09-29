@@ -1,6 +1,21 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
-local Window = Library.CreateLib("Clicker Simulator", "DarkTheme")
+local Window = Library.CreateLib("Clicker Simulator", "PurpleTheme")
+
+-- Прозрачность
+task.delay(1, function()
+    pcall(function()
+        for _, sg in pairs(player.PlayerGui:GetChildren()) do
+            if sg:IsA("ScreenGui") and sg.Name:find("Kavo") then
+                for _, f in pairs(sg:GetChildren()) do
+                    if f:IsA("Frame") then
+                        f.BackgroundTransparency = 0.3
+                    end
+                end
+            end
+        end
+    end)
+end)   
 
 local Tab = Window:NewTab("Raid")
 local Section = Tab:NewSection("Farm", "Auto Raid")
@@ -148,67 +163,47 @@ end)
 local Tab7 = Window:NewTab("Me")
 local Sec7 = Tab7:NewSection("Stats", "Character Stats (0-200)")
 
-Sec7:NewSlider("WalkSpeed", "WalkSpeed", 0, 200, 16, function(v)
-    local char = player.Character
-    if char then
+local function applyStat(prop, value)
+    pcall(function()
+        local char = player.Character
+        if not char then return end
         local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = v end
-    end
+        if not hum then return end
+        hum[prop] = value
+    end)
+end
+
+Sec7:NewSlider("WalkSpeed", "WalkSpeed", 0, 200, 16, function(v)
+    applyStat("WalkSpeed", v)
 end)
 
 Sec7:NewSlider("JumpPower", "JumpPower", 0, 200, 50, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.JumpPower = v end
-    end
+    applyStat("JumpPower", v)
 end)
 
 Sec7:NewSlider("JumpHeight", "JumpHeight", 0, 200, 7, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.JumpHeight = v end
-    end
+    applyStat("JumpHeight", v)
 end)
 
 Sec7:NewSlider("SwimSpeed", "SwimSpeed", 0, 200, 14, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.SwimSpeed = v end
-    end
+    applyStat("SwimSpeed", v)
 end)
 
-Sec7:NewSlider("WalkAnimScale", "Walk Animation Scale", 0, 200, 1, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkAnimationScale = v end
-    end
+Sec7:NewSlider("WalkAnim", "Walk Anim Scale", 0, 200, 1, function(v)
+    applyStat("WalkAnimationScale", v)
 end)
 
-Sec7:NewSlider("RunAnimScale", "Run Animation Scale", 0, 200, 1, function(v)
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum.RunAnimationScale = v end
-    end
+Sec7:NewSlider("RunAnim", "Run Anim Scale", 0, 200, 1, function(v)
+    applyStat("RunAnimationScale", v)
 end)
 
 Sec7:NewButton("Reset All", "Reset all to default", function()
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-            hum.JumpHeight = 7
-            hum.SwimSpeed = 14
-            hum.WalkAnimationScale = 1
-            hum.RunAnimationScale = 1
-        end
-    end
+    applyStat("WalkSpeed", 16)
+    applyStat("JumpPower", 50)
+    applyStat("JumpHeight", 7)
+    applyStat("SwimSpeed", 14)
+    applyStat("WalkAnimationScale", 1)
+    applyStat("RunAnimationScale", 1)
 end)         
 
 local Tab8 = Window:NewTab("ESP")
