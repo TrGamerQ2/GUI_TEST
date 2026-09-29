@@ -1,9 +1,9 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
-local Window = Library.CreateLib("Raid Farm", "DarkTheme")
+local Window = Library.CreateLib("Clicker Simulator", "DarkTheme")
 
 local Tab = Window:NewTab("Raid")
-local Section = Tab:NewSection("Фарм", "Raid Farm")
+local Section = Tab:NewSection("Farm", "Auto Raid")
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -76,4 +76,122 @@ Section:NewButton("Gates 1-6 + Shadow", "TP through all gates", function()
                     hrp.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
                     camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), gate.Position)
                 end
-            end   
+            end
+        end
+        wait(1.2)
+    end
+    local interact = workspace._THINGS.Minigames.RaidLobby.Interact
+    if interact then
+        local door = interact:GetChildren()[4]
+        if door then
+            local shadow = door:FindFirstChild("Shadow")
+            if shadow then
+                local hrp = getHrp()
+                if hrp then
+                    hrp.CFrame = shadow.CFrame
+                    camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), shadow.Position)
+                end
+            end
+        end
+    end
+end)
+
+Section:NewButton("Clicks", "Auto click (950,667) + (639,679)", function()
+    local VIM = game:GetService("VirtualInputManager")
+    VIM:SendMouseButtonEvent(950, 667, 0, true, game, 0)
+    wait(0.3)
+    VIM:SendMouseButtonEvent(950, 667, 0, false, game, 0)
+    wait(0.4)
+    VIM:SendMouseButtonEvent(639, 679, 0, true, game, 0)
+    wait(0.3)
+    VIM:SendMouseButtonEvent(639, 679, 0, false, game, 0)
+end)
+
+-- ============ ДОПОЛНИТЕЛЬНЫЕ ВКЛАДКИ ============
+
+local Tab2 = Window:NewTab("Clicker")
+local Sec2 = Tab2:NewSection("Auto Click", "Clicker Simulator")
+Sec2:NewButton("Auto Click", "Click at (895, 640)", function()
+    local VIM = game:GetService("VirtualInputManager")
+    VIM:SendMouseButtonEvent(895, 640, 0, true, game, 0)
+    wait(0.1)
+    VIM:SendMouseButtonEvent(895, 640, 0, false, game, 0)
+end)
+
+local Tab3 = Window:NewTab("Pets")
+local Sec3 = Tab3:NewSection("Pets", "Pet Management")
+Sec3:NewButton("Equip Best", "Equip best pet", function()
+    print("Equip Best")
+end)
+
+local Tab4 = Window:NewTab("Upgrades")
+local Sec4 = Tab4:NewSection("Upgrades", "Buy Upgrades")
+Sec4:NewButton("Buy All", "Buy all available upgrades", function()
+    print("Buy All")
+end)
+
+local Tab5 = Window:NewTab("Rebirth")
+local Sec5 = Tab5:NewSection("Rebirth", "Rebirth System")
+Sec5:NewButton("Auto Rebirth", "Rebirth when possible", function()
+    print("Auto Rebirth")
+end)
+
+local Tab6 = Window:NewTab("Teleport")
+local Sec6 = Tab6:NewSection("Teleport", "Quick TP")
+Sec6:NewButton("TP Spawn", "Teleport to spawn", function()
+    local hrp = getHrp()
+    if hrp then
+        hrp.CFrame = CFrame.new(0, 50, 0)
+    end
+end)
+
+local Tab7 = Window:NewTab("Me")
+local Sec7 = Tab7:NewSection("Movement", "Speed & Jump")
+
+Sec7:NewSlider("WalkSpeed", "WalkSpeed", 1, 500, 16, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = v end
+    end
+end)
+
+Sec7:NewSlider("JumpPower", "JumpPower", 50, 500, 50, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.JumpPower = v end
+    end
+end)
+
+Sec7:NewSlider("JumpHeight", "JumpHeight", 1, 50, 7.2, function(v)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.JumpHeight = v end
+    end
+end)
+
+Sec7:NewButton("Reset", "Reset all to default", function()
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+            hum.JumpPower = 50
+            hum.JumpHeight = 7.2
+        end
+    end
+end)   
+
+local Tab8 = Window:NewTab("ESP")
+local Sec8 = Tab8:NewSection("ESP", "See through walls")
+Sec8:NewButton("Toggle ESP", "Enable/disable ESP", function()
+    print("ESP toggled")
+end)
+
+local Tab9 = Window:NewTab("Settings")
+local Sec9 = Tab9:NewSection("Settings", "Script Config")
+Sec9:NewButton("Reset All", "Reset all settings", function()
+    print("Reset")
+end)   
