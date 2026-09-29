@@ -1,6 +1,6 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
-local Window = Library.CreateLib("Clicker Simulator", "PurpleTheme")
+local Window = Library.CreateLib("Clicker Simulator", "GrapeTheme")
 
 -- Прозрачность
 task.delay(1, function()
