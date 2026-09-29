@@ -187,7 +187,7 @@ Sec7:NewButton("Reset All", "Reset all to default", function()
     applyStat("SwimSpeed", 14)
     applyStat("WalkAnimationScale", 1)
     applyStat("RunAnimationScale", 1)
-end)        
+end)           
 
 local Tab8 = Window:NewTab("ESP")
 local Sec8 = Tab8:NewSection("ESP", "See through walls")
