@@ -5,6 +5,7 @@ local Window = WindUI:CreateWindow({
     Icon = "sword",
     Theme = "Dark",
     Folder = "ClickerFarm",
+    Collapsed = false,
 })
 
 local player = game.Players.LocalPlayer
@@ -132,20 +133,17 @@ RaidSec:Button({
 
 local respawnWait = 0.1
 
+local gateWait = 1.2
+
 RaidSec:Toggle({
     Title = "Auto Farm Loop",
     Desc = "Clicks + Gates + Shadow (loop)",
     Value = false,
     Callback = function(v)
+        farmRunning = v
         if v then
             task.spawn(function()
-                local stop = false
-                game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
-                    if gp then return end
-                    if input.KeyCode == Enum.KeyCode.F3 then stop = true end
-                end)
-
-                while not stop do
+                while farmRunning do
                     local ok, err = pcall(function()
                         local VIM = game:GetService("VirtualInputManager")
                         VIM:SendMouseButtonEvent(950, 667, 0, true, game, 0)
@@ -166,7 +164,8 @@ RaidSec:Toggle({
                             return char:FindFirstChild("HumanoidRootPart")
                         end
 
-                        while not getHrp() do wait(respawnWait) end
+                        while not getHrp() and farmRunning do wait(0.5) end
+                        if not farmRunning then return end
 
                         local rooms = workspace._THINGS.Minigames.RaidLobby.Rooms
                         if not rooms then
@@ -175,6 +174,7 @@ RaidSec:Toggle({
                         end
 
                         for i = 1, 6 do
+                            if not farmRunning then return end
                             local room = rooms[tostring(i)]
                             if room then
                                 local gate = room.Gate[tostring(1)]
@@ -186,7 +186,7 @@ RaidSec:Toggle({
                                     end
                                 end
                             end
-                            wait(1.2)
+                            wait(gateWait)
                         end
 
                         local interact = workspace._THINGS.Minigames.RaidLobby.Interact
@@ -216,16 +216,16 @@ RaidSec:Toggle({
 })
 
 RaidSec:Slider({
-    Title = "Respawn Wait",
-    Desc = "Wait for respawn (sec)",
+    Title = "Gate Wait",
+    Desc = "Delay between gates (sec)",
     Min = 0.1,
     Max = 10,
-    Default = 0.1,
+    Default = 1.2,
     Rounding = 1,
     Callback = function(v)
-        respawnWait = v
+        gateWait = v
     end
-})   
+})    
 
 RaidSec:Button({
     Title = "Clicks",
