@@ -215,32 +215,17 @@ RaidSec:Toggle({
     end
 })
 
-RaidSec:Slider({
+RaidSec:Input({
     Title = "Gate Wait",
     Desc = "Delay between gates (sec)",
-    Min = 0.1,
-    Max = 10,
-    Default = 1.2,
-    Rounding = 1,
+    Value = "1.2",
     Callback = function(v)
-        gateWait = v
+        local num = tonumber(v)
+        if num and num > 0 then
+            gateWait = num
+        end
     end
-})    
-
-RaidSec:Button({
-    Title = "Clicks",
-    Desc = "Auto click (950,667) + (639,679)",
-    Callback = function()
-        local VIM = game:GetService("VirtualInputManager")
-        VIM:SendMouseButtonEvent(950, 667, 0, true, game, 0)
-        wait(0.3)
-        VIM:SendMouseButtonEvent(950, 667, 0, false, game, 0)
-        wait(0.4)
-        VIM:SendMouseButtonEvent(639, 679, 0, true, game, 0)
-        wait(0.3)
-        VIM:SendMouseButtonEvent(639, 679, 0, false, game, 0)
-    end
-})
+})     
 
 -- ============ ME (Input'ы) ============
 local MeTab = Window:Tab({ Title = "Me", Icon = "user" })
