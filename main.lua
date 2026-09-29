@@ -325,6 +325,88 @@ MeSec:Input({
     end
 })
 
+local flyKey = Enum.KeyCode.X
+local flySpeed = 88
+local flying = false
+local flyConnection = nil
+
+local function startFly()
+    flying = true
+    local character = player.Character or player.CharacterAdded:Wait()
+    local root = character:WaitForChild("HumanoidRootPart")
+
+    local attachment = Instance.new("Attachment")
+    attachment.Name = "FlyAttachment"
+    attachment.Parent = root
+
+    local velocity = Instance.new("LinearVelocity")
+    velocity.Name = "FlyVelocity"
+    velocity.Attachment0 = attachment
+    velocity.MaxForce = math.huge
+    velocity.VectorVelocity = Vector3.zero
+    velocity.Parent = root
+
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not flying then return end
+        local camera = workspace.CurrentCamera
+        local direction = Vector3.zero
+        if UIS:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then direction -= camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then direction += camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.yAxis end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.yAxis end
+        velocity.VectorVelocity = direction.Magnitude > 0 and direction.Unit * flySpeed or Vector3.zero
+    end)
+end
+
+local function stopFly()
+    flying = false
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+    local character = player.Character
+    if character then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local v = root:FindFirstChild("FlyVelocity")
+            local a = root:FindFirstChild("FlyAttachment")
+            if v then v:Destroy() end
+            if a then a:Destroy() end
+        end
+    end
+end
+
+UIS.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == flyKey then
+        if flying then
+            stopFly()
+        else
+            startFly()
+        end
+    end
+end)
+
+MeSec:Keybind({
+    Title = "Fly",
+    Desc = "Press key to toggle fly (WASD + Space/Ctrl)",
+    Default = Enum.KeyCode.X,
+    Callback = function(key)
+        flyKey = key
+    end
+})
+
+MeSec:Input({
+    Title = "Fly Speed",
+    Desc = "Default: 88",
+    Value = "88",
+    Callback = function(v)
+        flySpeed = tonumber(v) or 88
+    end
+})   
+
 MeSec:Button({
     Title = "Reset All",
     Desc = "Reset to default",
@@ -333,20 +415,6 @@ MeSec:Button({
         applyStat("JumpPower", 50)
         applyStat("JumpHeight", 7)
         applyStat("SwimSpeed", 14)
-    end
-})
-
--- ============ CLICKER ============
-local ClickerTab = Window:Tab({ Title = "Clicker", Icon = "mouse" })
-local ClickerSec = ClickerTab:Section({ Title = "Auto Click" })
-ClickerSec:Button({
-    Title = "Auto Click",
-    Desc = "Click at (895, 640)",
-    Callback = function()
-        local VIM = game:GetService("VirtualInputManager")
-        VIM:SendMouseButtonEvent(895, 640, 0, true, game, 0)
-        wait(0.1)
-        VIM:SendMouseButtonEvent(895, 640, 0, false, game, 0)
     end
 })
 
@@ -359,18 +427,6 @@ TPSection:Button({
     Callback = function()
         local hrp = getHrp()
         if hrp then hrp.CFrame = CFrame.new(0, 50, 0) end
-    end
-})
-
--- ============ ESP ============
-local ESPTab = Window:Tab({ Title = "ESP", Icon = "eye" })
-local ESPSection = ESPTab:Section({ Title = "ESP" })
-ESPSection:Toggle({
-    Title = "Enable ESP",
-    Desc = "See through walls",
-    Value = false,
-    Callback = function(v)
-        print("ESP: " .. tostring(v))
     end
 })
 
