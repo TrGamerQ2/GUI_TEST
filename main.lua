@@ -10,6 +10,19 @@ local Window = WindUI:CreateWindow({
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local function setNoclip(enable)
+    local char = player.Character
+    if not char then return end
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = not enable
+        end
+    end
+end
+
+-- Включаем сразу
+setNoclip(true)
+print("NoClip ON")
 
 local function getHrp()
     local char = player.Character
@@ -191,17 +204,23 @@ RaidSec:Button({
 
 local respawnWait = 0.1
 
-local gateWait = 1.2
-
 local farmRunning = false
 local gateWait = 1.2
 
 RaidSec:Toggle({
     Title = "Auto Farm Loop",
-    Desc = "Clicks + Gates + Shadow (loop)",
+    Desc = "Clicks + Gates + Shadow + NoClip",
     Value = false,
     Callback = function(v)
-        farmRunning = v
+    farmRunning = v
+    if v then
+        setNoclip(true)
+        -- ... цикл ...
+    else
+        setNoclip(false)
+    end
+end   
+
         if v then
             task.spawn(function()
                 while farmRunning do
@@ -216,9 +235,7 @@ RaidSec:Toggle({
                         VIM:SendMouseButtonEvent(639, 679, 0, false, game, 0)
                         wait(3)
 
-                        local player = game.Players.LocalPlayer
                         local camera = workspace.CurrentCamera
-
                         local function getHrp()
                             local char = player.Character
                             if not char then return nil end
@@ -243,6 +260,7 @@ RaidSec:Toggle({
                                     local hrp = getHrp()
                                     if hrp then
                                         hrp.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
+                                        hrp.AssemblyLinearVelocity = Vector3.zero
                                         camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), gate.Position)
                                     end
                                 end
@@ -259,6 +277,7 @@ RaidSec:Toggle({
                                     local hrp = getHrp()
                                     if hrp then
                                         hrp.CFrame = shadow.CFrame
+                                        hrp.AssemblyLinearVelocity = Vector3.zero
                                         camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), shadow.Position)
                                     end
                                 end
@@ -272,6 +291,8 @@ RaidSec:Toggle({
                     wait(3)
                 end
             end)
+        else
+            setNoclip(false)
         end
     end
 })
@@ -286,8 +307,7 @@ RaidSec:Input({
             gateWait = num
         end
     end
-}) 
-
+})   
 -- ============ ME (Input'ы) ============
 local MeTab = Window:Tab({ Title = "Me", Icon = "user" })
 local MeSec = MeTab:Section({ Title = "Stats" })
