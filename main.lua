@@ -430,7 +430,7 @@ createMainUI = function()
 
     RaidSec:Input({
         Title = "Задержка",
-        Desc = "Телепортация между дверьми 1.2k dsp = 1 (сек)",
+        Desc = "Телепортация между дверьми (сек)",
         Value = "1.2",
         Callback = function(v)
             local num = tonumber(v)
