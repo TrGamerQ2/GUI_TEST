@@ -125,7 +125,27 @@ RaidSec:Button({
             if hrp and pad then
                 hrp.CFrame = pad.CFrame + Vector3.new(0, 5, 0)
                 camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), pad.Position)
-                wait(10)
+                wait(0.1)
+                     -- 3. Ждём окно и кликаем Yes
+        local vim = game:GetService("VirtualInputManager")
+        for _ = 1, 30 do
+            local msg = player.PlayerGui:FindFirstChild("Message")
+            if msg then
+                local btn = msg:FindFirstChild("Frame"):FindFirstChild("Buttons"):FindFirstChild("Button"):FindFirstChild("Main")
+                if btn then
+                    task.wait(0.5)
+                    local x = btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2
+                    local y = btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2 + 30
+                    vim:SendMouseButtonEvent(x, y, 0, true, game, 0)
+                    task.wait(0.1)
+                    vim:SendMouseButtonEvent(x, y, 0, false, game, 0)
+                    print("Yes нажат!")
+                    break
+                end
+            end
+            task.wait(0.5)
+            wait(1)
+        end
             end
         end
     end
