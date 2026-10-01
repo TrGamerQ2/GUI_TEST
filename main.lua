@@ -11,7 +11,7 @@ local function isValidKey(key)
 end
 
 local Window = WindUI:CreateWindow({
-    Title = "My Hub",
+    Title = "VERIFICATION",
     Icon = "star",
     Theme = "Dark",
 })
@@ -25,7 +25,7 @@ local inWorld2 = false
 local gateWait = 1.2
 local firstClaim = true
 
-local KeyTab = Window:Tab({ Title = "Key", Icon = "key" })
+local KeyTab = Window:Tab({ Title = "KEY", Icon = "key" })
 
 KeyTab:Input({
     Title = "Введите ключ",
@@ -256,8 +256,8 @@ createMainUI = function()
 
     -- ============ TOGGLE 1: Full ============
     RaidSec:Toggle({
-        Title = "Auto Raid (Full)",
-        Desc = "Мир 1 → Мир 2 → Yes → Difficulty → Farm",
+        Title = "Auto Raid (Spawn)",
+        Desc = "Если вы находитесь на спавне",
         Callback = function(state)
             autoRaid = state
 
@@ -354,7 +354,7 @@ createMainUI = function()
     -- ============ TOGGLE 2: World 2 ============
     RaidSec:Toggle({
         Title = "Auto Raid (World 2)",
-        Desc = "Свой портал → Yes → Difficulty → Farm",
+        Desc = "Если вы находитесь в мире с порталами для Raids",
         Callback = function(state)
             autoRaid = state
 
@@ -411,8 +411,8 @@ createMainUI = function()
     })
 
     RaidSec:Input({
-        Title = "Gate Wait",
-        Desc = "Задержка между гейтами (сек)",
+        Title = "Задержка",
+        Desc = "Телепорт между дверьми (сек)",
         Value = "1.2",
         Callback = function(v)
             local num = tonumber(v)
