@@ -1,408 +1,424 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
+-- ============ KEY SYSTEM ============
+local VALID_KEYS = { "BRUNO", "VICTOR", "SIMEX" }
+
+local function isValidKey(key)
+    for _, k in ipairs(VALID_KEYS) do
+        if key:upper() == k:upper() then return true end
+    end
+    return false
+end
+
 local Window = WindUI:CreateWindow({
-    Title = "Clicker Simulator",
-    Icon = "sword",
+    Title = "My Hub",
+    Icon = "star",
     Theme = "Dark",
-    Folder = "ClickerFarm",
-    Collapsed = false,
 })
 
-local player = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
+local unlocked = false
+local createMainUI
 
-local function getHrp()
-    local char = player.Character
-    if not char then return nil end
-    return char:FindFirstChild("HumanoidRootPart")
-end
+local autoRaid = false
+local myPortal = nil
+local inWorld2 = false
+local gateWait = 1.2
+local firstClaim = true
 
-local function findText(o)
-    if not o then return nil end
-    for _, c in pairs(o:GetChildren()) do
-        if c:IsA("TextLabel") then return c.Text end
-        local f = findText(c)
-        if f then return f end
-    end
-    return nil
-end
+local KeyTab = Window:Tab({ Title = "Key", Icon = "key" })
 
-local function applyStat(prop, value)
-    pcall(function()
+KeyTab:Input({
+    Title = "Введите ключ",
+    Placeholder = "XXXX-XXXX",
+    Callback = function(value)
+        if isValidKey(value) then
+            WindUI:Notify({ Title = "Успех", Content = "Доступ открыт!", Duration = 3 })
+            createMainUI()
+        else
+            WindUI:Notify({ Title = "Ошибка", Content = "Неверный ключ", Duration = 3 })
+        end
+    end,
+})
+
+-- ============ MAIN UI ============
+createMainUI = function()
+    if unlocked then return end
+    unlocked = true
+
+    local vim = game:GetService("VirtualInputManager")
+    local player = game.Players.LocalPlayer
+    local camera = workspace.CurrentCamera
+    local myName = player.Name
+
+    local function getHrp()
         local char = player.Character
-        if not char then return end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not hum then return end
-        hum[prop] = value
-    end)
-end
+        if not char then return nil end
+        return char:FindFirstChild("HumanoidRootPart")
+    end
 
--- ============ RAID ============
-local RaidTab = Window:Tab({ Title = "Raid", Icon = "swords" })
-local RaidSec = RaidTab:Section({ Title = "Auto Raid" })
-
-RaidSec:Button({
-    Title = "TP to Free Portal",
-    Desc = "Portal + Free Portal",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local camera = workspace.CurrentCamera
-
-        local function getHrp()
-            local char = player.Character
-            if not char then return nil end
-            return char:FindFirstChild("HumanoidRootPart")
+    local function findPrompt(obj)
+        if not obj then return nil end
+        for _, child in pairs(obj:GetChildren()) do
+            if child:IsA("ProximityPrompt") then return child end
+            local found = findPrompt(child)
+            if found then return found end
         end
+        return nil
+    end
 
-        local function findPrompt(obj)
-            if not obj then return nil end
-            for _, child in pairs(obj:GetChildren()) do
-                if child:IsA("ProximityPrompt") then
-                    return child
-                end
-                local found = findPrompt(child)
-                if found then return found end
-            end
-            return nil
+    local function findText(obj)
+        if not obj then return nil end
+        for _, child in pairs(obj:GetChildren()) do
+            if child:IsA("TextLabel") then return child.Text end
+            local found = findText(child)
+            if found then return found end
         end
+        return nil
+    end
 
-        local function findText(obj)
-            if not obj then return nil end
-            for _, child in pairs(obj:GetChildren()) do
-                if child:IsA("TextLabel") then
-                    return child.Text
-                end
-                local found = findText(child)
-                if found then return found end
-            end
-            return nil
-        end
+    local function click(x, y)
+        vim:SendMouseButtonEvent(x, y, 0, true, game, 0)
+        task.wait(0.05)
+        vim:SendMouseButtonEvent(x, y, 0, false, game, 0)
+        task.wait(0.1)
+    end
 
-        while not getHrp() do wait(0.5) end
+    local function getRaids()
+        local things = workspace:FindFirstChild("_THINGS")
+        if not things then return nil end
+        local mg = things:FindFirstChild("Minigames")
+        if not mg then return nil end
+        local re = mg:FindFirstChild("RaidEvent")
+        if not re then return nil end
+        local portals = re:FindFirstChild("Portals")
+        if not portals then return nil end
+        return portals:FindFirstChild("Raids")
+    end
 
-        -- 1. ТП к RaidPortal + нажать E
+    local function tpToPortal(num)
+        local raids = getRaids()
+        if not raids then return false end
+        local raid = raids:FindFirstChild(tostring(num))
+        if not raid then return false end
+        local pad = raid:FindFirstChild("Pad")
+        if not pad then return false end
+        local part = pad:FindFirstChild("Part")
+        if not part then return false end
         local hrp = getHrp()
-        local portal = workspace._MAP.Interact.RaidPortal.Portal
-        if portal then
-            hrp.CFrame = portal.CFrame + Vector3.new(-5, 3, -5)
-            camera.CFrame = CFrame.lookAt(
-                hrp.Position + Vector3.new(-55, 3, -33),
-                portal.Position
-            )
-            wait(0.1)
+        if not hrp then return false end
+        hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
+        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), part.Position)
+        return true
+    end
 
-            local prompt = findPrompt(workspace._MAP.Interact.RaidPortal)
-            if prompt then
-                prompt:InputHoldBegin()
-                wait(1)
-                prompt:InputHoldEnd()
-            end
-            wait(2)
-        end
-
-        -- 2. ТП к свободному порталу
-        local raids = workspace._THINGS.Minigames.RaidEvent.Portals.Raids
-        if not raids then return end
-
-        local freeNum = nil
+    local function findMyPortal()
+        local raids = getRaids()
+        if not raids then return nil end
         for i = 1, 10 do
             local raid = raids:FindFirstChild(tostring(i))
             if raid then
                 local bb = raid:FindFirstChild("Billboard")
                 if bb then
                     local text = findText(bb)
-                    if text and text:find("Unclaimed") then
-                        freeNum = i
-                        break
+                    if text and text:find(myName, 1, true) then
+                        return i
                     end
                 end
             end
         end
-
-        if freeNum then
-            local pad = raids[tostring(freeNum)].Pad.Part
-            hrp = getHrp()
-            if hrp and pad then
-                hrp.CFrame = pad.CFrame + Vector3.new(0, 5, 0)
-                camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), pad.Position)
-                wait(0.1)
-                     -- 3. Ждём окно и кликаем Yes
-        local vim = game:GetService("VirtualInputManager")
-        for _ = 1, 30 do
-            local msg = player.PlayerGui:FindFirstChild("Message")
-            if msg then
-                local btn = msg:FindFirstChild("Frame"):FindFirstChild("Buttons"):FindFirstChild("Button"):FindFirstChild("Main")
-                if btn then
-                    task.wait(0.5)
-                    local x = btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2
-                    local y = btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2 + 30
-                    vim:SendMouseButtonEvent(x, y, 0, true, game, 0)
-                    task.wait(0.1)
-                    vim:SendMouseButtonEvent(x, y, 0, false, game, 0)
-                    print("Yes нажат!")
-                    break
-                end
-            end
-            task.wait(0.5)
-        end
-            end
-        end
+        return nil
     end
-})   
 
-RaidSec:Button({
-    Title = "TP to My Portal",
-    Desc = "Teleport to your claimed portal",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local camera = workspace.CurrentCamera
+    local function enterWorld2()
+        local map = workspace:FindFirstChild("_MAP")
+        if not map then return false end
+        local interact = map:FindFirstChild("Interact")
+        if not interact then return false end
+        local raidPortal = interact:FindFirstChild("RaidPortal")
+        if not raidPortal then return false end
+        local portal = raidPortal:FindFirstChild("Portal")
+        if not portal then return false end
 
-        local function getHrp()
-            local char = player.Character
-            if not char then return nil end
-            return char:FindFirstChild("HumanoidRootPart")
-        end
-
-        local function findText(obj)
-            if not obj then return nil end
-            for _, child in pairs(obj:GetChildren()) do
-                if child:IsA("TextLabel") then
-                    return child.Text
-                end
-                local found = findText(child)
-                if found then return found end
-            end
-            return nil
-        end
-
-        while not getHrp() do wait(0.5) end
-
-        local raids = workspace._THINGS.Minigames.RaidEvent.Portals.Raids
-        if not raids then return end
-
-        local myName = player.Name
-        local myNum = nil
-
-        for i = 1, 10 do
-            local raid = raids:FindFirstChild(tostring(i))
-            if raid then
-                local bb = raid:FindFirstChild("Billboard")
-                if bb then
-                    local text = findText(bb)
-                    if text and text:find(myName) then
-                        myNum = i
-                        break
-                    end
-                end
-            end
-        end
-
-        if myNum then
-            local pad = raids[tostring(myNum)].Pad.Part
-            local hrp = getHrp()
-            if hrp and pad then
-                hrp.CFrame = pad.CFrame + Vector3.new(0, 5, 0)
-                camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0,3,0), pad.Position)
-            end
-        end
-    end
-})   
-
-local respawnWait = 0.1
-
-local gateWait = 1.2
-
-local farmRunning = false
-local gateWait = 1.2
-
-RaidSec:Toggle({
-    Title = "Auto Farm Loop",
-    Desc = "Clicks + Gates + Shadow (loop)",
-    Value = false,
-    Callback = function(v)
-        farmRunning = v
-        if v then
-            task.spawn(function()
-                while farmRunning do
-                    local ok, err = pcall(function()
-                        local VIM = game:GetService("VirtualInputManager")
-                        VIM:SendMouseButtonEvent(1250, 730, 0, true, game, 0)
-                        wait(0.3)
-                        VIM:SendMouseButtonEvent(1250, 730, 0, false, game, 0)
-                        wait(0.4)
-                        VIM:SendMouseButtonEvent(900, 730, 0, true, game, 0)
-                        wait(0.3)
-                        VIM:SendMouseButtonEvent(900, 730, 0, false, game, 0)
-                        wait(3)
-
-                        local player = game.Players.LocalPlayer
-                        local camera = workspace.CurrentCamera
-
-                        local function getHrp()
-                            local char = player.Character
-                            if not char then return nil end
-                            return char:FindFirstChild("HumanoidRootPart")
-                        end
-
-                        while not getHrp() and farmRunning do wait(0.5) end
-                        if not farmRunning then return end
-
-                        local rooms = workspace._THINGS.Minigames.RaidLobby.Rooms
-                        if not rooms then
-                            wait(5)
-                            return
-                        end
-
-                        for i = 1, 6 do
-                            if not farmRunning then return end
-                            local room = rooms[tostring(i)]
-                            if room then
-                                local gate = room.Gate[tostring(1)]
-                                if gate then
-                                    local hrp = getHrp()
-                                    if hrp then
-                                        hrp.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
-                                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), gate.Position)
-                                    end
-                                end
-                            end
-                            wait(gateWait)
-                        end
-
-                        local interact = workspace._THINGS.Minigames.RaidLobby.Interact
-                        if interact then
-                            local door = interact:GetChildren()[4]
-                            if door then
-                                local shadow = door:FindFirstChild("Shadow")
-                                if shadow then
-                                    local hrp = getHrp()
-                                    if hrp then
-                                        hrp.CFrame = shadow.CFrame
-                                        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 3, 0), shadow.Position)
-                                    end
-                                end
-                            end
-                        end
-                    end)
-
-                    if not ok then
-                        wait(5)
-                    end
-                    wait(3)
-                end
-            end)
-        end
-    end
-})
-
-RaidSec:Input({
-    Title = "Gate Wait",
-    Desc = "Delay between gates (sec)",
-    Value = "1.2",
-    Callback = function(v)
-        local num = tonumber(v)
-        if num and num > 0 then
-            gateWait = num
-        end
-    end
-}) 
-
--- ============ ME (Input'ы) ============
-local MeTab = Window:Tab({ Title = "Me", Icon = "user" })
-local MeSec = MeTab:Section({ Title = "Stats" })
-
-MeSec:Input({
-    Title = "WalkSpeed",
-    Desc = "Default: 16",
-    Value = "16",
-    Callback = function(v)
-        applyStat("WalkSpeed", tonumber(v) or 16)
-    end
-})
-
-MeSec:Input({
-    Title = "JumpPower",
-    Desc = "Default: 50",
-    Value = "50",
-    Callback = function(v)
-        applyStat("JumpPower", tonumber(v) or 50)
-    end
-})
-
-MeSec:Input({
-    Title = "JumpHeight",
-    Desc = "Default: 7",
-    Value = "7",
-    Callback = function(v)
-        applyStat("JumpHeight", tonumber(v) or 7)
-    end
-})
-
-MeSec:Input({
-    Title = "SwimSpeed",
-    Desc = "Default: 14",
-    Value = "14",
-    Callback = function(v)
-        applyStat("SwimSpeed", tonumber(v) or 14)
-    end
-})
-
-MeSec:Button({
-    Title = "Reset All",
-    Desc = "Reset to default",
-    Callback = function()
-        applyStat("WalkSpeed", 16)
-        applyStat("JumpPower", 50)
-        applyStat("JumpHeight", 7)
-        applyStat("SwimSpeed", 14)
-    end
-})
-
--- ============ CLICKER ============
-local ClickerTab = Window:Tab({ Title = "Clicker", Icon = "mouse" })
-local ClickerSec = ClickerTab:Section({ Title = "Auto Click" })
-ClickerSec:Button({
-    Title = "Auto Click",
-    Desc = "Click at (895, 640)",
-    Callback = function()
-        local VIM = game:GetService("VirtualInputManager")
-        VIM:SendMouseButtonEvent(895, 640, 0, true, game, 0)
-        wait(0.1)
-        VIM:SendMouseButtonEvent(895, 640, 0, false, game, 0)
-    end
-})
-
--- ============ TELEPORT ============
-local TPTab = Window:Tab({ Title = "Teleport", Icon = "map" })
-local TPSection = TPTab:Section({ Title = "Teleport" })
-TPSection:Button({
-    Title = "TP Spawn",
-    Desc = "Teleport to spawn",
-    Callback = function()
         local hrp = getHrp()
-        if hrp then hrp.CFrame = CFrame.new(0, 50, 0) end
-    end
-})
+        if not hrp then return false end
 
--- ============ ESP ============
-local ESPTab = Window:Tab({ Title = "ESP", Icon = "eye" })
-local ESPSection = ESPTab:Section({ Title = "ESP" })
-ESPSection:Toggle({
-    Title = "Enable ESP",
-    Desc = "See through walls",
-    Value = false,
-    Callback = function(v)
-        print("ESP: " .. tostring(v))
-    end
-})
+        hrp.CFrame = portal.CFrame + Vector3.new(-5, 3, -5)
+        camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(-55, 3, -33), portal.Position)
+        task.wait(0.1)
 
--- ============ SETTINGS ============
-local SetTab = Window:Tab({ Title = "Settings", Icon = "settings" })
-local SetSection = SetTab:Section({ Title = "Settings" })
-SetSection:Button({
-    Title = "Reset All",
-    Desc = "Reset all settings",
-    Callback = function()
-        print("Reset")
+        local prompt = findPrompt(raidPortal)
+        if prompt then
+            prompt:InputHoldBegin()
+            task.wait(1)
+            prompt:InputHoldEnd()
+        end
+        task.wait(2)
+        return true
     end
-})   
+
+    local function selectDifficulty()
+        local rld = nil
+        for _ = 1, 60 do
+            if not autoRaid then break end
+            rld = player.PlayerGui:FindFirstChild("RaidCreate")
+            if rld then break end
+            task.wait(0.05)
+        end
+
+        if not rld then return end
+
+        local frame = rld:FindFirstChild("Frame")
+        if not frame then return end
+        local container = frame:FindFirstChild("Container")
+        if not container then return end
+        local nextUnlock = container:FindFirstChild("NextUnlocks")
+        if not nextUnlock or not nextUnlock:IsA("TextLabel") then return end
+
+        local myLvl = tonumber(player.PlayerGui:FindFirstChild("RaidLvlDmg")
+            and player.PlayerGui.RaidLvlDmg:FindFirstChild("Container")
+            and player.PlayerGui.RaidLvlDmg.Container:FindFirstChild("Progress")
+            and player.PlayerGui.RaidLvlDmg.Container.Progress:FindFirstChild("Lvl")
+            and player.PlayerGui.RaidLvlDmg.Container.Progress.Lvl.Text:match("(%d+)")) or 0
+
+        for _ = 1, 10 do
+            if not autoRaid then break end
+            local needLvl = tonumber(nextUnlock.Text:match("(%d+)")) or 99999
+            if myLvl >= needLvl then
+                click(1197, 589)
+                task.wait(0.1)
+            else
+                break
+            end
+        end
+
+        WindUI:Notify({ Title = "Raid", Content = "Готово! Lvl " .. myLvl, Duration = 2 })
+    end
+
+    local function farmLoop()
+        while autoRaid do
+            click(1250, 730)
+            task.wait(0.4)
+            click(900, 730)
+            task.wait(3)
+
+            local rooms = workspace:FindFirstChild("_THINGS")
+            if rooms then rooms = rooms:FindFirstChild("Minigames") end
+            if rooms then rooms = rooms:FindFirstChild("RaidLobby") end
+            if rooms then rooms = rooms:FindFirstChild("Rooms") end
+
+            if not rooms then break end
+
+            for i = 1, 6 do
+                if not autoRaid then break end
+                local room = rooms:FindFirstChild(tostring(i))
+                if room then
+                    local gateFolder = room:FindFirstChild("Gate")
+                    if gateFolder then
+                        local gate = gateFolder:FindFirstChild("1")
+                        if gate then
+                            local h = getHrp()
+                            if h then
+                                h.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
+                                camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), gate.Position)
+                            end
+                        end
+                    end
+                end
+                task.wait(gateWait)
+            end
+
+            local interact = workspace:FindFirstChild("_THINGS")
+            if interact then interact = interact:FindFirstChild("Minigames") end
+            if interact then interact = interact:FindFirstChild("RaidLobby") end
+            if interact then interact = interact:FindFirstChild("Interact") end
+
+            if interact then
+                local children = interact:GetChildren()
+                local door = children[4]
+                if door then
+                    local shadow = door:FindFirstChild("Shadow")
+                    if shadow then
+                        local h = getHrp()
+                        if h then
+                            h.CFrame = shadow.CFrame
+                            camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), shadow.Position)
+                        end
+                    end
+                end
+            end
+
+            task.wait(3)
+        end
+    end
+
+    local RaidTab = Window:Tab({ Title = "Raid", Icon = "swords" })
+    local RaidSec = RaidTab:Section({ Title = "Auto Raid" })
+
+    -- ============ TOGGLE 1: Full ============
+    RaidSec:Toggle({
+        Title = "Auto Raid (Full)",
+        Desc = "Мир 1 → Мир 2 → Yes → Difficulty → Farm",
+        Callback = function(state)
+            autoRaid = state
+
+            if state then
+                task.spawn(function()
+                    while autoRaid do
+                        while not getHrp() and autoRaid do task.wait(0.5) end
+                        if not autoRaid then break end
+
+                        enterWorld2()
+
+                        local found = findMyPortal()
+                        if found then
+                            myPortal = found
+                            inWorld2 = true
+                            tpToPortal(found)
+                            task.wait(0.3)
+                        else
+                            local raids = getRaids()
+                            if not raids then
+                                task.wait(3)
+                                continue
+                            end
+
+                            local freeNum = nil
+                            for i = 1, 10 do
+                                local raid = raids:FindFirstChild(tostring(i))
+                                if raid then
+                                    local bb = raid:FindFirstChild("Billboard")
+                                    if bb then
+                                        local text = findText(bb)
+                                        if text and text:find("Unclaimed") then
+                                            freeNum = i
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+
+                            if not freeNum then
+                                WindUI:Notify({ Title = "Raid", Content = "Нет свободных порталов", Duration = 2 })
+                                task.wait(5)
+                                continue
+                            end
+
+                            if tpToPortal(freeNum) then
+                                myPortal = freeNum
+                                inWorld2 = true
+                                task.wait(0.3)
+                            else
+                                task.wait(2)
+                                continue
+                            end
+                        end
+
+                        if firstClaim then
+                            for _ = 1, 50 do
+                                if not autoRaid then break end
+                                local msg = player.PlayerGui:FindFirstChild("Message")
+                                if msg then
+                                    local btn = msg:FindFirstChild("Frame")
+                                        and msg.Frame:FindFirstChild("Buttons")
+                                        and msg.Frame.Buttons:FindFirstChild("Button")
+                                        and msg.Frame.Buttons.Button:FindFirstChild("Main")
+                                    if btn then
+                                        task.wait(0.1)
+                                        local x = btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2
+                                        local y = btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2 + 30
+                                        click(x, y)
+                                        break
+                                    end
+                                end
+                                task.wait(0.1)
+                            end
+                            firstClaim = false
+                        end
+
+                        selectDifficulty()
+                        farmLoop()
+
+                        if autoRaid and myPortal then
+                            tpToPortal(myPortal)
+                        end
+
+                        task.wait(3)
+                    end
+                end)
+            else
+                WindUI:Notify({ Title = "Raid", Content = "Auto Raid выключен", Duration = 2 })
+            end
+        end,
+    })
+
+    -- ============ TOGGLE 2: World 2 ============
+    RaidSec:Toggle({
+        Title = "Auto Raid (World 2)",
+        Desc = "Свой портал → Yes → Difficulty → Farm",
+        Callback = function(state)
+            autoRaid = state
+
+            if state then
+                task.spawn(function()
+                    while autoRaid do
+                        while not getHrp() and autoRaid do task.wait(0.5) end
+                        if not autoRaid then break end
+
+                        local found = findMyPortal()
+                        if found then
+                            myPortal = found
+                            tpToPortal(found)
+                            task.wait(0.3)
+                        else
+                            WindUI:Notify({ Title = "Ошибка", Content = "Свой портал не найден", Duration = 3 })
+                            task.wait(3)
+                            continue
+                        end
+
+                        for _ = 1, 50 do
+                            if not autoRaid then break end
+                            local msg = player.PlayerGui:FindFirstChild("Message")
+                            if msg then
+                                local btn = msg:FindFirstChild("Frame")
+                                    and msg.Frame:FindFirstChild("Buttons")
+                                    and msg.Frame.Buttons:FindFirstChild("Button")
+                                    and msg.Frame.Buttons.Button:FindFirstChild("Main")
+                                if btn then
+                                    task.wait(0.1)
+                                    local x = btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2
+                                    local y = btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2 + 30
+                                    click(x, y)
+                                    break
+                                end
+                            end
+                            task.wait(0.1)
+                        end
+
+                        selectDifficulty()
+                        farmLoop()
+
+                        if autoRaid and myPortal then
+                            tpToPortal(myPortal)
+                        end
+
+                        task.wait(3)
+                    end
+                end)
+            else
+                WindUI:Notify({ Title = "Raid", Content = "World 2 Raid выключен", Duration = 2 })
+            end
+        end,
+    })
+
+    RaidSec:Input({
+        Title = "Gate Wait",
+        Desc = "Задержка между гейтами (сек)",
+        Value = "1.2",
+        Callback = function(v)
+            local num = tonumber(v)
+            if num and num > 0 then
+                gateWait = num
+            end
+        end
+    })
+end   
