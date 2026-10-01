@@ -227,13 +227,13 @@ RaidSec:Toggle({
                 while farmRunning do
                     local ok, err = pcall(function()
                         local VIM = game:GetService("VirtualInputManager")
-                        VIM:SendMouseButtonEvent(950, 667, 0, true, game, 0)
+                        VIM:SendMouseButtonEvent(1250, 730, 0, true, game, 0)
                         wait(0.3)
-                        VIM:SendMouseButtonEvent(950, 667, 0, false, game, 0)
+                        VIM:SendMouseButtonEvent(1250, 730, 0, false, game, 0)
                         wait(0.4)
-                        VIM:SendMouseButtonEvent(639, 679, 0, true, game, 0)
+                        VIM:SendMouseButtonEvent(900, 730, 0, true, game, 0)
                         wait(0.3)
-                        VIM:SendMouseButtonEvent(639, 679, 0, false, game, 0)
+                        VIM:SendMouseButtonEvent(900, 730, 0, false, game, 0)
                         wait(3)
 
                         local player = game.Players.LocalPlayer
