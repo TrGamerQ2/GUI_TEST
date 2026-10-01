@@ -144,7 +144,6 @@ RaidSec:Button({
                 end
             end
             task.wait(0.5)
-            wait(1)
         end
             end
         end
