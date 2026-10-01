@@ -1,7 +1,7 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- ============ KEY SYSTEM ============
-local VALID_KEYS = { "BRUNO", "VICTOR", "SIMEX" }
+local VALID_KEYS = { "SIMEX", "333", "123" }
 
 local function isValidKey(key)
     for _, k in ipairs(VALID_KEYS) do
@@ -25,7 +25,7 @@ local inWorld2 = false
 local gateWait = 1.2
 local firstClaim = true
 
-local KeyTab = Window:Tab({ Title = "KEY", Icon = "key" })
+local KeyTab = Window:Tab({ Title = "Key", Icon = "key" })
 
 KeyTab:Input({
     Title = "Введите ключ",
@@ -191,64 +191,62 @@ createMainUI = function()
             end
         end
 
-        WindUI:Notify({ Title = "Raid", Content = "Готово! Lvl " .. myLvl, Duration = 2 })
+        WindUI:Notify({ Title = "Raid", Content = "Lvl " .. myLvl, Duration = 2 })
     end
 
-    local function farmLoop()
-        while autoRaid do
-            click(1250, 730)
-            task.wait(0.4)
-            click(900, 730)
-            task.wait(3)
+    local function farmOnce()
+        click(1250, 730)
+        task.wait(0.4)
+        click(900, 730)
+        task.wait(3)
 
-            local rooms = workspace:FindFirstChild("_THINGS")
-            if rooms then rooms = rooms:FindFirstChild("Minigames") end
-            if rooms then rooms = rooms:FindFirstChild("RaidLobby") end
-            if rooms then rooms = rooms:FindFirstChild("Rooms") end
+        local rooms = workspace:FindFirstChild("_THINGS")
+        if rooms then rooms = rooms:FindFirstChild("Minigames") end
+        if rooms then rooms = rooms:FindFirstChild("RaidLobby") end
+        if rooms then rooms = rooms:FindFirstChild("Rooms") end
 
-            if not rooms then break end
+        if not rooms then return end
 
-            for i = 1, 6 do
-                if not autoRaid then break end
-                local room = rooms:FindFirstChild(tostring(i))
-                if room then
-                    local gateFolder = room:FindFirstChild("Gate")
-                    if gateFolder then
-                        local gate = gateFolder:FindFirstChild("1")
-                        if gate then
-                            local h = getHrp()
-                            if h then
-                                h.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
-                                camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), gate.Position)
-                            end
-                        end
-                    end
-                end
-                task.wait(gateWait)
-            end
-
-            local interact = workspace:FindFirstChild("_THINGS")
-            if interact then interact = interact:FindFirstChild("Minigames") end
-            if interact then interact = interact:FindFirstChild("RaidLobby") end
-            if interact then interact = interact:FindFirstChild("Interact") end
-
-            if interact then
-                local children = interact:GetChildren()
-                local door = children[4]
-                if door then
-                    local shadow = door:FindFirstChild("Shadow")
-                    if shadow then
+        for i = 1, 6 do
+            if not autoRaid then return end
+            local room = rooms:FindFirstChild(tostring(i))
+            if room then
+                local gateFolder = room:FindFirstChild("Gate")
+                if gateFolder then
+                    local gate = gateFolder:FindFirstChild("1")
+                    if gate then
                         local h = getHrp()
                         if h then
-                            h.CFrame = shadow.CFrame
-                            camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), shadow.Position)
+                            h.CFrame = gate.CFrame + Vector3.new(0, 3, 0)
+                            camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), gate.Position)
                         end
                     end
                 end
             end
-
-            task.wait(3)
+            task.wait(gateWait)
         end
+
+        local interact = workspace:FindFirstChild("_THINGS")
+        if interact then interact = interact:FindFirstChild("Minigames") end
+        if interact then interact = interact:FindFirstChild("RaidLobby") end
+        if interact then interact = interact:FindFirstChild("Interact") end
+
+        if interact then
+            local children = interact:GetChildren()
+            local door = children[4]
+            if door then
+                local shadow = door:FindFirstChild("Shadow")
+                if shadow then
+                    local h = getHrp()
+                    if h then
+                        h.CFrame = shadow.CFrame
+                        camera.CFrame = CFrame.lookAt(h.Position + Vector3.new(0, 3, 0), shadow.Position)
+                    end
+                end
+            end
+        end
+
+        task.wait(3)
     end
 
     local RaidTab = Window:Tab({ Title = "Raid", Icon = "swords" })
@@ -257,7 +255,7 @@ createMainUI = function()
     -- ============ TOGGLE 1: Full ============
     RaidSec:Toggle({
         Title = "Auto Raid (Spawn)",
-        Desc = "Если вы находитесь на спавне",
+        Desc = "Использовать если вы находитесь на спавне",
         Callback = function(state)
             autoRaid = state
 
@@ -267,8 +265,10 @@ createMainUI = function()
                         while not getHrp() and autoRaid do task.wait(0.5) end
                         if not autoRaid then break end
 
+                        -- ЗАХОД В МИР 2
                         enterWorld2()
 
+                        -- ИЩЕМ СВОЙ ПОРТАЛ
                         local found = findMyPortal()
                         if found then
                             myPortal = found
@@ -313,6 +313,7 @@ createMainUI = function()
                             end
                         end
 
+                        -- КЛИК YES (только при первом захвате)
                         if firstClaim then
                             for _ = 1, 50 do
                                 if not autoRaid then break end
@@ -335,11 +336,19 @@ createMainUI = function()
                             firstClaim = false
                         end
 
-                        selectDifficulty()
-                        farmLoop()
+                        -- ЦИКЛ: каждый рейд проверяет сложность заново
+                        while autoRaid do
+                            selectDifficulty()
+                            farmOnce()
 
-                        if autoRaid and myPortal then
-                            tpToPortal(myPortal)
+                            if not autoRaid then break end
+
+                            -- ТП обратно на свой портал
+                            if myPortal then
+                                tpToPortal(myPortal)
+                            end
+
+                            task.wait(1)
                         end
 
                         task.wait(3)
@@ -353,8 +362,8 @@ createMainUI = function()
 
     -- ============ TOGGLE 2: World 2 ============
     RaidSec:Toggle({
-        Title = "Auto Raid (World 2)",
-        Desc = "Если вы находитесь в мире с порталами для Raids",
+        Title = "Auto Raid (Portals)",
+        Desc = "Когда находитесь в мире с Порталами для Raids",
         Callback = function(state)
             autoRaid = state
 
@@ -364,6 +373,7 @@ createMainUI = function()
                         while not getHrp() and autoRaid do task.wait(0.5) end
                         if not autoRaid then break end
 
+                        -- ИЩЕМ СВОЙ ПОРТАЛ
                         local found = findMyPortal()
                         if found then
                             myPortal = found
@@ -375,6 +385,7 @@ createMainUI = function()
                             continue
                         end
 
+                        -- КЛИК YES
                         for _ = 1, 50 do
                             if not autoRaid then break end
                             local msg = player.PlayerGui:FindFirstChild("Message")
@@ -394,11 +405,18 @@ createMainUI = function()
                             task.wait(0.1)
                         end
 
-                        selectDifficulty()
-                        farmLoop()
+                        -- ЦИКЛ: каждый рейд проверяет сложность заново
+                        while autoRaid do
+                            selectDifficulty()
+                            farmOnce()
 
-                        if autoRaid and myPortal then
-                            tpToPortal(myPortal)
+                            if not autoRaid then break end
+
+                            if myPortal then
+                                tpToPortal(myPortal)
+                            end
+
+                            task.wait(1)
                         end
 
                         task.wait(3)
@@ -412,7 +430,7 @@ createMainUI = function()
 
     RaidSec:Input({
         Title = "Задержка",
-        Desc = "Телепорт между дверьми (сек)",
+        Desc = "Телепортация между дверьми 1.2k dsp = 1 (сек)",
         Value = "1.2",
         Callback = function(v)
             local num = tonumber(v)
